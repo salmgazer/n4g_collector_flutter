@@ -11,17 +11,17 @@ final countriesReducer = combineReducers<List<Country>>([
   TypedReducer<List<Country>, CountriesNotLoadedAction>(_setNoCountries),
 ]);
 
-List<Country> _addCountry(List<Country> countrues, AddCountryAction action) {
-  return List.from(countrues)..add(action.country);
+List<Country> _addCountry(List<Country> countries, AddCountryAction action) {
+  return List.from(countries)..add(action.country);
 }
 
 List<Country> _deleteCountry(List<Country> countries, DeleteCountryAction action) {
-  return countries.where((country) => country.id != country.id).toList();
+  return countries.where((country) => country.code != country.code).toList();
 }
 
 List<Country> _updateCountry(List<Country> countries, UpdateCountryAction action) {
   return countries
-      .map((country) => country.id == action.id ? action.updatedCountry : country)
+      .map((country) => country.code == action.code ? action.updatedCountry : country)
       .toList();
 }
 

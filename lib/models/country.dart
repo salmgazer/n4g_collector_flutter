@@ -1,12 +1,11 @@
 class Country {
-  int id;
   String name;
   String code;
-  DateTime createdAt;
-  DateTime updatedAt;
+  int createdAt;
+  int updatedAt;
 
 
-  Country(this.id, this.name, this.code, this.createdAt, this.updatedAt);
+  Country(this.name, this.code, this.createdAt, this.updatedAt);
 
   @override
   bool operator ==(Object other) =>
@@ -22,31 +21,28 @@ class Country {
   }
 
   Country.fromMap(Map<String, dynamic> map) {
-    this.id = map['id'];
     name = map['name'];
     code = map['code'];
-    createdAt = DateTime.parse(map['createdAt']);
-    updatedAt = DateTime.parse(map['updatedAt']);
+    createdAt = int.parse(map['createdAt'].toString());
+    updatedAt = int.parse(map['updatedAt'].toString());
   }
 
   factory Country.fromJson(Map<String, dynamic> parsedJson) {
     return Country(
-      parsedJson['id'],
       parsedJson['name'],
       parsedJson['code'],
-      parsedJson['createdAt'],
-      parsedJson['updatedAt']
+      int.parse(parsedJson['createdAt']),
+      int.parse(parsedJson['updatedAt'])
     );
   }
 
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>
     {
-      "id": id.toString(),
       "name": name,
       "code": code,
-      "createdAt": createdAt.toString(),
-      "updatedAt": updatedAt.toString(),
+      "createdAt": createdAt,
+      "updatedAt": updatedAt,
     };
     return map;
   }

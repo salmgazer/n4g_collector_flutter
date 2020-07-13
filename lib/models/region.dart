@@ -1,9 +1,9 @@
 class Region {
-  int id;
+  String id;
   String name;
-  int countryId;
-  DateTime createdAt;
-  DateTime updatedAt;
+  String countryCode;
+  int createdAt;
+  int updatedAt;
 
   Region(this.id, this.name, this.createdAt, this.updatedAt);
 
@@ -23,9 +23,9 @@ class Region {
   Region.fromMap(Map<String, dynamic> map) {
     this.id = map['id'];
     name = map['name'];
-    countryId = map['countryId'];
-    createdAt = DateTime.parse(map['createdAt']);
-    updatedAt = DateTime.parse(map['updatedAt']);
+    countryCode = map['countryCode'];
+    createdAt = int.parse(map['createdAt'].toString());
+    updatedAt = int.parse(map['updatedAt'].toString());
   }
 
   Map<String, dynamic> toMap() {
@@ -33,9 +33,9 @@ class Region {
     {
       "id": id.toString(),
       "name": name,
-      "countryId": countryId,
-      "createdAt": createdAt.toString(),
-      "updatedAt": updatedAt.toString(),
+      "countryCode": countryCode,
+      "createdAt": createdAt,
+      "updatedAt": updatedAt,
     };
     return map;
   }

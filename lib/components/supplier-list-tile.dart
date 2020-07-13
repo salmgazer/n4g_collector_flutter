@@ -9,11 +9,11 @@ class SupplierListItem extends ListTile {
                 EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
             leading: CircleAvatar(
               backgroundColor: Colors.brown[400],
-              child: Text(supplier.firstName[0] + supplier.lastName[0],
+              child: Text(supplier.firstName[0] + supplier.otherNames[0],
                   style: TextStyle(color: Colors.white)),
             ),
             title: Text(
-              '${supplier.firstName}   ${supplier.lastName}  (${supplier.membershipCode})',
+              '${supplier.firstName}   ${supplier.otherNames}  (${supplier.membershipCode})',
               style: TextStyle(color: Colors.grey[800]),
             ),
             subtitle: Row(

@@ -1,10 +1,12 @@
+import 'package:collector/middleware/Api.dart';
+import 'package:collector/models/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'middleware/AppDb.dart';
 import 'utils/strings.dart';
 import 'app_state_container.dart';
 import 'models/user.dart';
-
+import 'dart:convert';
 
 class LoginPage extends StatefulWidget {
   static String tag = 'login-page';
@@ -18,6 +20,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
+  var oldSession = false;
 
   void _showDialog(title, body, buttonText) {
     // flutter defined function
@@ -42,6 +45,23 @@ class _LoginPageState extends State<LoginPage> {
       },
     );
   }
+
+  @override
+  void initState() {
+    AppDb.getAppSetting().then((oldAppSetting) => setState(() {
+      AppDb.filterUsers().then((users) => setState(() {
+        final currentTime = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+        final twentyFourHours = 24*60*60;
+
+        if (users.length > 0 && oldAppSetting.lastLogInDate != null &&
+            (currentTime - oldAppSetting.lastLogInDate) < (twentyFourHours)) {
+          this.oldSession = true;
+        }
+      }));
+    }));
+    super.initState();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +112,7 @@ class _LoginPageState extends State<LoginPage> {
           minWidth: 200.0,
           height: 42.0,
           onPressed: () async {
+
             var  phone = phoneController.text;
             var password = passwordController.text;
             inheritedWidget.setLanguage('eng');
@@ -99,41 +120,64 @@ class _LoginPageState extends State<LoginPage> {
               print("You also do not exist");
               _showDialog('Failed', 'Incorrect login details.', 'Close');
               return;
-            }
+            } else {
+              if (this.oldSession == true) {
+                final userFromDb = await AppDb.findUser(phone, password);
+                if (userFromDb == null) {
+                  _showDialog('Failed', 'Incorrect login details.', 'Close');
+                  return;
+                }
+                inheritedWidget.saveUser(new User(
+                    userFromDb.userId,
+                    userFromDb.firstName,
+                    userFromDb.otherNames,
+                    userFromDb.phone,
+                    userFromDb.status,
+                    userFromDb.gender,
+                    userFromDb.password,
+                    userFromDb.createdAt,
+                    userFromDb.updatedAt));
 
-            // final db = AppDb;
-            // await db.open();
+                Navigator.of(context).pushReplacementNamed(DashboardPage.tag);
+                return;
+              }
+            }
 
             phone = phoneController.text.substring(0, 0) + "+233" + phoneController.text.substring(1);
-            final userFromDb = await AppDb.findUser(phone, password);
-            if (userFromDb == null) {
+            final userLoginResponse = await Api().login(phoneController.text.toString(), password);
+            if (userLoginResponse.statusCode != 201) {
               print('You do not exist');
               _showDialog('Failed', 'Failed to login, check your details and try again', 'Close');
-            }
-            else if (userFromDb.phoneNumber == phone) {
+            } else {
+              print(userLoginResponse.body);
               // labels[lang]['current_user'] = user.toMap()
-
-              print(userFromDb.toMap());
-              print(userFromDb.phoneNumber);
+              final userBody = userLoginResponse.body;
+              final userFromApi = User.fromJson(json.decode(userBody));
 
               inheritedWidget.saveUser(new User(
-                  userFromDb.id,
-                  userFromDb.firstName,
-                  userFromDb.lastName,
-                  userFromDb.otherNames,
-                  userFromDb.email,
-                  userFromDb.phone,
-                  userFromDb.country,
-                  userFromDb.roles,
-                  userFromDb.status,
-                  userFromDb.community,
-                  userFromDb.confirmed,
-                  userFromDb.wallet,
-                  userFromDb.countryId,
-                  userFromDb.createdAt,
-                  userFromDb.updatedAt));
+                  userFromApi.userId,
+                  userFromApi.firstName,
+                  userFromApi.otherNames,
+                  userFromApi.phone,
+                  userFromApi.status,
+                  userFromApi.gender,
+                  userFromApi.password,
+                  userFromApi.createdAt,
+                  userFromApi.updatedAt));
+
               // print('${inheritedWidget.getUser().firstName} is about to login');
               // print(inheritedWidget.getUser());
+
+              final AppSetting appSetting = await AppDb.getAppSetting();
+              print("======================");
+              print(appSetting.languageCode);
+              appSetting.lastLogInDate = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+              if (appSetting.languageCode == null) {
+                appSetting.languageCode = 'eng';
+              }
+              print(appSetting.toMap());
+              await AppDb.updateAppSetting(appSetting.toMap());
+
               Navigator.of(context).pushReplacementNamed(DashboardPage.tag);
             }
           },

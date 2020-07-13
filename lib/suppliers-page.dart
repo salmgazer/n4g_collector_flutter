@@ -2,12 +2,15 @@ import 'package:collector/download_sites_page.dart';
 import 'package:flutter/material.dart';
 import 'components/my-drawer.dart';
 import 'models/supplier.dart';
-import 'models/group.dart';
+import 'models/organization.dart';
 import 'models/community.dart';
 import 'components/supplier-list-tile.dart';
 import './utils/strings.dart';
 import 'app_state_container.dart';
 import 'middleware/AppDb.dart';
+import 'package:uuid/uuid.dart';
+
+var uuid = new Uuid();
 
 // Create a Form Widget
 class SuppliersPage extends StatefulWidget {
@@ -24,6 +27,8 @@ class _SuppliersPageState extends State<SuppliersPage> {
   String filter = '';
   List<Supplier> suppliers = <Supplier>[];
 
+  static final currentTime = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+
   final _registerSupplierFormKey = GlobalKey<FormState>();
   final boxHeight = 20.0;
 
@@ -36,17 +41,13 @@ class _SuppliersPageState extends State<SuppliersPage> {
   String _gender = '-- Select Gender --';
   List<String> _genders = ['-- Select Gender --', 'female', 'male'];
 
-  Group _group =
-      Group(-1, '-- Select group --', DateTime(2019), DateTime(2019));
-  List<Group> _groups = [];
+  Organization _organization =
+      Organization('-1', '-- Select organization --', '-1', currentTime, currentTime);
+  List<Organization> _organizations = [];
 
   Community _community =
-      Community(-1, '-- Select community --', DateTime(2019), DateTime(2019));
+      Community('-1', '-- Select community --', currentTime, currentTime);
   List<Community> _communities = [];
-
-  getGroups() async {
-    return AppDb.filterGroups();
-  }
 
   @override
   void dispose() {
@@ -64,8 +65,8 @@ class _SuppliersPageState extends State<SuppliersPage> {
     }));
 
     getSuppliers().then((fetchedSuppliers) => setState(() {
-          suppliers = fetchedSuppliers;
-        }));
+      suppliers = fetchedSuppliers;
+    }));
 
     searchController.addListener(() {
       setState(() {
@@ -73,9 +74,11 @@ class _SuppliersPageState extends State<SuppliersPage> {
       });
     });
 
-    getGroups().then((fetchedGroups) => setState(() {
-      _groups = fetchedGroups;
-      _groups.insert(0, _group);
+    getOrganizations().then((fetchedOrganizations) => setState(() {
+      print("##################################");
+      print(fetchedOrganizations);
+      _organizations = fetchedOrganizations;
+      _organizations.insert(0, _organization);
     }));
 
     super.initState();
@@ -87,6 +90,10 @@ class _SuppliersPageState extends State<SuppliersPage> {
 
   getCommunities() async {
     return AppDb.filterCommunities();
+  }
+
+  getOrganizations() async {
+    return AppDb.filterOrganizations();
   }
 
 
@@ -103,15 +110,15 @@ class _SuppliersPageState extends State<SuppliersPage> {
     final displayName = labels[appLanguage]['suppliers'];
 
     final defaultCommunity = _communities
-        .firstWhere((community) => community.id.isNegative, orElse: () => null);
+        .firstWhere((community) => community.id == '-1', orElse: () => null);
     if (defaultCommunity == null) {
       _communities.insert(0, _community);
     }
 
-    final defaultGroup =
-        _groups.firstWhere((group) => group.id.isNegative, orElse: () => null);
-    if (defaultGroup == null) {
-      _groups.insert(0, _group);
+    final defaultOrganization =
+        _organizations.firstWhere((organization) => organization.id == '-1', orElse: () => null);
+    if (defaultOrganization == null) {
+      _organizations.insert(0, _organization);
     }
 
     // Build a Form widget using the _formKey we created above
@@ -137,16 +144,16 @@ class _SuppliersPageState extends State<SuppliersPage> {
       keyboardType: TextInputType.text,
       controller: lastNameController,
       decoration: new InputDecoration(
-        hintText: 'Enter last name',
+        hintText: 'Enter other name',
         labelStyle: TextStyle(color: Colors.brown),
         icon: const Icon(Icons.face),
-        labelText: 'Last name',
+        labelText: 'Other names',
         contentPadding: EdgeInsets.all(15.0),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
       ),
       validator: (value) {
         if (value.length < 2) {
-          return 'Please enter last name';
+          return 'Please enter other name';
         }
       },
     );
@@ -243,7 +250,7 @@ class _SuppliersPageState extends State<SuppliersPage> {
             labelText: 'Community',
           ),
           isEmpty:
-              _community == Community(-1, '', DateTime(2019), DateTime(2019)),
+              _community == Community('-1', '', currentTime, currentTime),
           child: new DropdownButtonHideUnderline(
             child: new DropdownButton(
               value: _community,
@@ -266,7 +273,7 @@ class _SuppliersPageState extends State<SuppliersPage> {
       },
     );
 
-    final group = new FormField(
+    final organization = new FormField(
       builder: (FormFieldState state) {
         return InputDecorator(
           decoration: InputDecoration(
@@ -274,23 +281,23 @@ class _SuppliersPageState extends State<SuppliersPage> {
             border:
                 OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
             icon: const Icon(Icons.group),
-            labelText: 'Group',
+            labelText: 'Organization',
           ),
-          isEmpty: _group == Group(-1, '', DateTime(2019), DateTime(2019)),
+          isEmpty: _organization == Organization('-1', '', '-1', currentTime, currentTime),
           child: new DropdownButtonHideUnderline(
             child: new DropdownButton(
-              value: _group,
+              value: _organization,
               isDense: true,
-              onChanged: (Group newGroup) {
+              onChanged: (Organization newOrganization) {
                 setState(() {
-                  _group = newGroup;
-                  state.didChange(newGroup);
+                  _organization = newOrganization;
+                  state.didChange(newOrganization);
                 });
               },
-              items: _groups.map((Group group) {
+              items: _organizations.where((org) => org.communityId == _community.id || org.id == '-1').map((Organization organization) {
                 return new DropdownMenuItem(
-                  value: group,
-                  child: new Text(group.name),
+                  value: organization,
+                  child: new Text(organization.name),
                 );
               }).toList(),
             ),
@@ -315,20 +322,24 @@ class _SuppliersPageState extends State<SuppliersPage> {
               Scaffold.of(context).showSnackBar(SnackBar(content: Text('Processing Data')));
               */
               final firstName = firstNameController.text;
-              final lastName = lastNameController.text;
-              final phoneNumber = phoneNumberController.text;
+              final otherNames = lastNameController.text;
+              final phone = phoneNumberController.text;
               final age = ageController.text;
               final about = aboutController.text;
+              final currentTime = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
 
               final Map newSupplier = <String, dynamic>{
+                "id": uuid.v4(),
                 "firstName": firstName,
-                "lastName": lastName,
-                "phoneNumber": phoneNumber,
+                "otherNames": otherNames,
+                "phone": phone,
                 "age": age,
                 "communityId": _community.id,
                 "gender": _gender,
                 "membershipCode": age * 2,
                 "about": about,
+                "createdAt": currentTime,
+                "updatedAt": currentTime
               };
 
               print(newSupplier);
@@ -412,9 +423,9 @@ class _SuppliersPageState extends State<SuppliersPage> {
               SizedBox(height: boxHeight),
               gender,
               SizedBox(height: boxHeight),
-              group,
-              SizedBox(height: boxHeight),
               community,
+              SizedBox(height: boxHeight),
+              organization,
               SizedBox(height: boxHeight),
               formButton,
               SizedBox(height: boxHeight),

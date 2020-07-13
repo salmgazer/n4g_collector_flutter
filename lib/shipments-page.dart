@@ -5,7 +5,7 @@ import 'components/shipment-list-item.dart';
 import 'components/my-drawer.dart';
 import 'app_state_container.dart';
 
-import 'models/produce.dart';
+import 'models/product.dart';
 
 // Create a Form Widget
 class ShipmentsPage extends StatefulWidget {
@@ -38,8 +38,9 @@ class _ShipmentsPageState extends State<ShipmentsPage> {
 
   double walletCash = 8000;
 
-  Produce _produce = Produce(-1, '-- Select produce --', 0, DateTime(2019), DateTime(2019));
-  List<Produce> _products = <Produce>[];
+  static final currentTime = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+  Product _product = Product('-1', '-- Select product --', 0, currentTime, currentTime);
+  List<Product> _products = <Product>[];
 
 
   @override
@@ -47,30 +48,30 @@ class _ShipmentsPageState extends State<ShipmentsPage> {
     final AppStateContainerState inheritedWidget = AppStateContainer.of(context);
     final appLanguage = inheritedWidget.getLanguage();
 
-    final produceField = new FormField(
+    final productField = new FormField(
       builder: (FormFieldState state) {
         return InputDecorator(
           decoration: InputDecoration(
             contentPadding: EdgeInsets.all(15.0),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
             icon: const Icon(Icons.nature),
-            labelText: 'Select Produce',
+            labelText: 'Select Product',
           ),
-          isEmpty: _produce == Produce(-1, '-- Select produce --', 0, DateTime(2019), DateTime(2019)),
+          isEmpty: _product == Product('-1', '-- Select product --', 0, currentTime, currentTime),
           child: new DropdownButtonHideUnderline(
             child: new DropdownButton(
-              value: _produce,
+              value: _product,
               isDense: true,
-              onChanged: (Produce newProduce) {
+              onChanged: (Product newProduct) {
                 setState(() {
-                  _produce = newProduce;
-                  state.didChange(newProduce);
+                  _product = newProduct;
+                  state.didChange(newProduct);
                 });
               },
-              items: _products.map((Produce produce) {
+              items: _products.map((Product product) {
                 return new DropdownMenuItem(
-                  value: produce,
-                  child: new Text(produce.name),
+                  value: product,
+                  child: new Text(product.name),
                 );
               }).toList(),
             ),
@@ -108,7 +109,7 @@ class _ShipmentsPageState extends State<ShipmentsPage> {
       child: new SingleChildScrollView(
         child: new Column(
           children: <Widget>[
-              produceField,
+              productField,
               SizedBox(height: 20),
               new TextFormField(
                 keyboardType: TextInputType.number,

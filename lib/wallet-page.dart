@@ -116,19 +116,13 @@ class _WalletPageState extends State<WalletPage>
               // user = await AppDb.findSupplierById(supplier.id);
               AppDb.findUserById(myUser.id).then((userFromDb) => setState(() {
                 inheritedWidget.saveUser(new User(
-                    userFromDb.id,
+                    userFromDb.userId,
                     userFromDb.firstName,
-                    userFromDb.lastName,
                     userFromDb.otherNames,
-                    userFromDb.email,
                     userFromDb.phone,
-                    userFromDb.country,
-                    userFromDb.roles,
                     userFromDb.status,
-                    userFromDb.community,
-                    userFromDb.confirmed,
-                    userFromDb.wallet,
-                    userFromDb.countryId,
+                    userFromDb.gender,
+                    userFromDb.password,
                     userFromDb.createdAt,
                     userFromDb.updatedAt));
               }));

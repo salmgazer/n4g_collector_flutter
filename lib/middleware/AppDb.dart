@@ -9,8 +9,8 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart' show rootBundle;
 import '../models/supplier.dart';
 import '../models/community.dart';
-import '../models/group.dart';
-import '../models/produce.dart';
+import '../models/organization.dart';
+import '../models/product.dart';
 import '../models/currency.dart';
 import '../models/language.dart';
 import '../models/withdrawal.dart';
@@ -35,7 +35,7 @@ class AppDb {
     final dbConfig = MigrationConfig(
         initializationScript: initialScript,
         migrationScripts: migration_0001); // put migration scripts in this array
-    var path = join(databasesPath, "appDb.db");
+    var path = join(databasesPath, "wowzee.db");
 
     try {
       await Directory(databasesPath).create(recursive: true);
@@ -50,7 +50,7 @@ class AppDb {
 
 
       // Copy from asset
-      ByteData data = await rootBundle.load(join("assets", "appDb.db"));
+      ByteData data = await rootBundle.load(join("assets", "wowzee.db"));
       List<int> bytes =
           data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
       await new File(path).writeAsBytes(bytes);
@@ -97,6 +97,21 @@ class AppDb {
     return  batch.commit(noResult: true, continueOnError: true);
   }
 
+  static Future<dynamic> batchInsertWithError(String tableName, List<dynamic> itemMaps) async {
+    await initializeDB();
+
+    final batch = db.batch();
+
+    if (itemMaps == null) {
+      return;
+    }
+    for (var i = 0; i < itemMaps.length; i++) {
+      batch.insert(tableName, itemMaps[i]);
+    }
+
+    return  batch.commit(noResult: true);
+  }
+
   static Future<dynamic> findOne(
       String tableName, dynamic id, dynamic model) async {
     await initializeDB();
@@ -110,7 +125,7 @@ class AppDb {
     return null;
   }
 
-  static Future<dynamic> findSupplierById(int id) async {
+  static Future<dynamic> findSupplierById(String id) async {
     await initializeDB();
     List<Map> maps =
     await db.query(Supplier.tableName, where: 'id = ?', whereArgs: [id]);
@@ -129,22 +144,22 @@ class AppDb {
         'SELECT transactions.id, transactions.amountPaid, transactions.collectorId, transactions.cost, transactions.createdAt, transactions.currencyId, transactions.date, transactions.payment, transactions.productId, transactions.sacs, transactions.status, transactions.supplierId, transactions.createdAt, transactions.updatedAt,'
         'products.name as produce,'
         'suppliers.firstName as supplierFirstName,'
-        'suppliers.lastName as supplierLastName,'
+        'suppliers.otherNames as supplierLastName,'
         'users.firstName as collectorFirstName,'
-        'users.lastName as collectorLastName '
+        'users.otherNames as collectorLastName '
         'from transactions '
         'INNER JOIN products on products.id = transactions.productId '
         'INNER JOIN suppliers on suppliers.id = transactions.supplierId '
-        'INNER JOIN users on users.id = transactions.collectorId '
+        'INNER JOIN users on users.userId = transactions.collectorId '
         'where transactions.productId = ?'
         '', [productId]);
     return transactions.map((item) => Trade.fromMap(item)).toList();
   }
 
-  static Future<dynamic> findCountryById(int id) async {
+  static Future<dynamic> findCountryByCode(String code) async {
     await initializeDB();
     List<Map> maps =
-    await db.query(Country.tableName, where: 'id = ?', whereArgs: [id]);
+    await db.query(Country.tableName, where: 'code = ?', whereArgs: [code]);
 
     if (maps.length > 0) {
       return Country.fromMap(maps.first);
@@ -153,7 +168,7 @@ class AppDb {
     return null;
   }
 
-  static Future<dynamic> findRegionById(int id) async {
+  static Future<dynamic> findRegionById(dynamic id) async {
     await initializeDB();
     List<Map> maps =
     await db.query(Region.tableName, where: 'id = ?', whereArgs: [id]);
@@ -165,7 +180,7 @@ class AppDb {
     return null;
   }
 
-  static Future<dynamic> findDistrictById(int id) async {
+  static Future<dynamic> findDistrictById(dynamic id) async {
     await initializeDB();
     List<Map> maps =
     await db.query(District.tableName, where: 'id = ?', whereArgs: [id]);
@@ -177,10 +192,10 @@ class AppDb {
     return null;
   }
 
-  static Future<dynamic> findUserById(int id) async {
+  static Future<dynamic> findUserById(String userId) async {
     await initializeDB();
     List<Map> maps =
-    await db.query(User.tableName, where: 'id = ?', whereArgs: [id]);
+    await db.query(User.tableName, where: 'userId = ?', whereArgs: [userId]);
 
     if (maps.length > 0) {
       return User.fromMap(maps.first);
@@ -195,6 +210,18 @@ class AppDb {
     if (maps.length > 0) {
       print(maps.first);
       return AppSetting.fromMap(maps.first);
+    } else {
+      await createOne(AppSetting.tableName, <String, dynamic> {
+        "currencyName": "Ghanaian cedis",
+        "languageCode": "eng",
+        "lastLogInDate": null
+      });
+      maps = await db.query(AppSetting.tableName);
+      if (maps.length > 0) {
+        print("+++++++++++++++++++++++++");
+        print(maps.first);
+        return AppSetting.fromMap(maps.first);
+      }
     }
     return null;
   }
@@ -205,8 +232,8 @@ class AppDb {
     List<Map> maps = await db.rawQuery(''
         'SELECT suppliers.id, '
         'suppliers.firstName, '
-        'suppliers.lastName, '
-        'suppliers.phoneNumber as phone, '
+        'suppliers.otherNames, '
+        'suppliers.phone, '
         'suppliers.gender, '
         'suppliers.membershipCode, '
         'suppliers.accountBalance, '
@@ -231,9 +258,9 @@ class AppDb {
         'withdrawals.createdAt, '
         'products.name as produce, '
         'users.firstName as collectorFirstName, '
-        'users.lastName as collectorLastName, '
+        'users.otherNames as collectorLastName, '
         'withdrawals.updatedAt from withdrawals '
-        'INNER JOIN users on users.id = withdrawals.collectorId '
+        'INNER JOIN users on users.userId = withdrawals.collectorId '
         'INNER JOIN products on products.id = withdrawals.productId '
         'where supplierId = ?', [supplierId]
     );
@@ -267,12 +294,11 @@ class AppDb {
         'withdrawals.createdAt, '
         'products.name as produce, '
         'users.firstName as collectorFirstName, '
-        'users.lastName as collectorLastName, '
+        'users.otherNames as collectorLastName, '
         'withdrawals.updatedAt from withdrawals '
-        'INNER JOIN users on users.id = withdrawals.collectorId '
+        'INNER JOIN users on users.userId = withdrawals.collectorId '
         'INNER JOIN products on products.id = withdrawals.productId '
     );
-    print("########################");
     print(withdrawals);
     return withdrawals.map((item) => Withdrawal.fromMap(item)).toList();
   }
@@ -282,7 +308,7 @@ class AppDb {
     List<Map> walletTopUps = await db.rawQuery(''
         'SELECT walletTopUps.id,  walletTopUps.amount, walletTopUps.forUserId, walletTopUps.byUserId, walletTopUps.createdAt, walletTopUps.updatedAt, '
         'users.firstName as byUserFirstName,'
-        'users.lastName as byUserLastName '
+        'users.otherNames as byUserLastName '
         'from walletTopUps '
         'INNER JOIN users on users.id = walletTopUps.byUserId '
         'where forUserId = ?', [userId]);
@@ -296,13 +322,13 @@ class AppDb {
         'SELECT transactions.id, transactions.amountPaid, transactions.collectorId, transactions.cost, transactions.createdAt, transactions.currencyId, transactions.date, transactions.payment, transactions.productId, transactions.sacs, transactions.status, transactions.supplierId, transactions.createdAt, transactions.updatedAt,'
         'products.name as produce,'
         'suppliers.firstName as supplierFirstName,'
-        'suppliers.lastName as supplierLastName,'
+        'suppliers.otherNames as supplierLastName,'
         'users.firstName as collectorFirstName,'
-        'users.lastName as collectorLastName '
+        'users.otherNames as collectorLastName '
         'from transactions '
         'INNER JOIN products on products.id = transactions.productId '
         'INNER JOIN suppliers on suppliers.id = transactions.supplierId '
-        'INNER JOIN users on users.id = transactions.collectorId '
+        'INNER JOIN users on users.userId = transactions.collectorId '
         'where transactions.supplierId = ?'
         '', [supplierId]);
     return transactions.map((item) => Trade.fromMap(item)).toList();
@@ -315,20 +341,20 @@ class AppDb {
         'SELECT transactions.id, transactions.amountPaid, transactions.collectorId, transactions.cost, transactions.createdAt, transactions.currencyId, transactions.date, transactions.payment, transactions.productId, transactions.sacs, transactions.status, transactions.supplierId, transactions.createdAt, transactions.updatedAt,'
         'products.name as produce,'
         'suppliers.firstName as supplierFirstName,'
-        'suppliers.lastName as supplierLastName,'
+        'suppliers.otherNames as supplierLastName,'
         'users.firstName as collectorFirstName,'
-        'users.lastName as collectorLastName '
+        'users.otherNames as collectorLastName '
         'from transactions '
         'INNER JOIN products on products.id = transactions.productId '
         'INNER JOIN suppliers on suppliers.id = transactions.supplierId '
-        'INNER JOIN users on users.id = transactions.collectorId');
+        'INNER JOIN users on users.userId = transactions.collectorId');
     return transactions.map((item) => Trade.fromMap(item)).toList();
   }
 
   static Future<dynamic> filterProducts() async {
     await initializeDB();
-    List<Map> maps = await db.query(Produce.tableName);
-    return maps.map((item) => Produce.fromMap(item)).toList();
+    List<Map> maps = await db.query(Product.tableName);
+    return maps.map((item) => Product.fromMap(item)).toList();
   }
 
   static Future<dynamic> filterUsers() async {
@@ -337,10 +363,10 @@ class AppDb {
     return maps.map((item) => User.fromMap(item)).toList();
   }
 
-  static Future<dynamic> filterGroups() async {
+  static Future<dynamic> filterOrganizations() async {
     await initializeDB();
-    List<Map> maps = await db.query(Group.tableName);
-    return maps.map((item) => Group.fromMap(item)).toList();
+    List<Map> maps = await db.query(Organization.tableName);
+    return maps.map((item) => Organization.fromMap(item)).toList();
   }
 
   static Future<dynamic> filterCommunities() async {
@@ -383,7 +409,20 @@ class AppDb {
         .update(tableName, itemMap, where: 'id = ?', whereArgs: [itemMap['id']]);
   }
 
-  static Future<int> updateSupplerAccountBalance(String tableName, String type, int supplierId, double amount) async {
+  static Future<int> updateTransactionAmountPaid(double newAmount, String transactionId, String payment, int currentTime) async {
+    await initializeDB();
+
+    return db.rawUpdate(
+        'UPDATE transactions SET "amountPaid" = ?, "updatedAt" = ?, payment = ? WHERE id = ?',
+        [newAmount, currentTime, payment, transactionId]);
+  }
+
+  static Future<int> updateAppSetting(Map itemMap) async {
+    await initializeDB();
+    return await db.update(AppSetting.tableName, itemMap);
+  }
+
+  static Future<int> updateSupplerAccountBalance(String tableName, String type, String supplierId, double amount) async {
 
     await initializeDB();
     final supplier = await findSupplierById(supplierId);
@@ -404,7 +443,7 @@ class AppDb {
     // return await db.rawUpdate('update table $tableName set accountBalance = $newAccountBalance');
   }
 
-  static Future<int> updateUserWallet(String tableName, String type, int userId, double amount) async {
+  static Future<int> updateUserWallet(String tableName, String type, String userId, double amount) async {
 
     await initializeDB();
     final user = await findUserById(userId);
@@ -425,8 +464,8 @@ class AppDb {
 
     print("@@@@@@@@@@@@@@@@@@");
     print(userId);
-    print(user.id);
-    print(user1.id);
+    print(user.userId);
+    print(user1.userId);
     print(newWalletBalance);
     print(count);
     print(user1.wallet);

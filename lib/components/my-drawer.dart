@@ -1,3 +1,4 @@
+import 'package:collector/sync-page.dart';
 import 'package:collector/wallet-page.dart';
 import 'package:flutter/material.dart';
 import '../dashboard_page.dart';
@@ -10,6 +11,7 @@ import '../utils/strings.dart';
 import '../shipments-page.dart';
 import '../app_state_container.dart';
 import '../wallet-page.dart';
+import '../sync-page.dart';
 
 class MyDrawer extends StatelessWidget {
   static final drawerHeaderTextStyleName = new TextStyle(color: Colors.white, fontSize: 20);
@@ -45,6 +47,7 @@ class MyDrawer extends StatelessWidget {
             Divider(
               height: 2.0,
             ),
+            /*
             ListTile(
               leading: Icon(Icons.account_balance_wallet),
               title: Text(labels[appLanguage]['wallet']),
@@ -56,6 +59,7 @@ class MyDrawer extends StatelessWidget {
             Divider(
               height: 2.0,
             ),
+             */
             ListTile(
               leading: Icon(Icons.people),
               title: Text(labels[appLanguage]['suppliers']),
@@ -88,9 +92,22 @@ class MyDrawer extends StatelessWidget {
                 Navigator.of(context).pushNamed(DownloadSitesPage.tag);
               },
             ),
+
             Divider(
               height: 2.0,
             ),
+            ListTile(
+              leading: Icon(Icons.sync),
+              title: Text(labels[appLanguage]['sync']),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(SyncPage.tag);
+              },
+            ),
+            Divider(
+              height: 2.0,
+            ),
+            /*
             ListTile(
               leading: Icon(Icons.settings),
               title: Text(labels[appLanguage]['settings']),
@@ -102,6 +119,7 @@ class MyDrawer extends StatelessWidget {
             Divider(
               height: 2.0,
             ),
+            */
             ListTile(
               leading: Icon(Icons.account_box),
               title: Text(labels[appLanguage]['profile']),

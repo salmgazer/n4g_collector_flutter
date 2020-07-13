@@ -72,8 +72,10 @@ class _DashboardPageState extends State<DashboardPage> {
     return _n4gnotifications.map((n4gnotification) => NotificationListItem(n4gnotification, context)).toList();
   }
 
-  Produce _produce = Produce(-1, '-- Select produce --', 0, DateTime(2019), DateTime(2019));
-  List<Produce> _products = <Produce>[];
+  static final currentTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+  Product _product = Product('-1', '-- Select produce --', 0, currentTime, currentTime);
+  List<Product> _products = <Product>[];
   List<Trade> _trades = <Trade>[];
   Currency _currency;
   List<Withdrawal> _withdrawals = <Withdrawal>[];
@@ -247,15 +249,15 @@ class _DashboardPageState extends State<DashboardPage> {
 
 
     return DefaultTabController(
-      length: 2,
+      length: 1,
       child: Scaffold(
         drawer: new MyDrawer(),
         appBar: AppBar(
           bottom: TabBar(
             tabs: [
               /*Tab(icon: Icon(Icons.notifications_active), text: labels[appLanguage]['notifications']),*/
-              Tab(icon: Icon(Icons.shopping_cart), text: labels[appLanguage]['sales']),
-              Tab(icon: Icon(Icons.attach_money), text: labels[appLanguage]['loans']),
+              Tab(icon: Icon(Icons.shopping_cart), text: labels[appLanguage]['purchhases']),
+              // Tab(icon: Icon(Icons.attach_money), text: labels[appLanguage]['loans']),
             ],
           ),
           title: Text(displayName),
@@ -265,7 +267,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: TabBarView(
             children: [
               salesTab,
-              withdrawalsTab,
+              // withdrawalsTab,
             ],
           ),
         )

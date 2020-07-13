@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'models/supplier.dart';
 import 'app_state_container.dart';
 import 'models/withdrawal.dart';
-import 'models/produce.dart';
+import 'models/product.dart';
 import 'components/withdrawal-list-item.dart';
 import 'models/user.dart';
 
@@ -39,8 +39,9 @@ class _FinanceTopTabsState extends State<FinanceTopTabs>
     return AppDb.filterSupplierWithdrawals(supplier.id);
   }
 
-  Produce _produce = Produce(-1, '-- Select produce --', 0, DateTime(2019), DateTime(2019));
-  List<Produce> _products = <Produce>[];
+  static final currentTime = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+  Product _product = Product('-1', '-- Select produce --', 0, currentTime, currentTime);
+  List<Product> _products = <Product>[];
 
   @override
   void initState() {
@@ -72,9 +73,9 @@ class _FinanceTopTabsState extends State<FinanceTopTabs>
 
     final user = inheritedWidget.getUser();
 
-    final defaultProduct = _products.firstWhere((product) => product.id.isNegative, orElse: () => null);
+    final defaultProduct = _products.firstWhere((product) => product.id == '-1', orElse: () => null);
     if (defaultProduct == null) {
-      _products.insert(0, _produce);
+      _products.insert(0, _product);
     }
 
     List<WithdrawalListItem> _buildWithdrawalsList(BuildContext context) {
@@ -101,23 +102,23 @@ class _FinanceTopTabsState extends State<FinanceTopTabs>
             icon: const Icon(Icons.nature),
             // labelText: 'Select Produce',
           ),
-          isEmpty: _produce == Produce(-1, '-- Select produce --', 0, DateTime(2019), DateTime(2019)),
+          isEmpty: _product == Product('-1', '-- Select produce --', 0, currentTime, currentTime),
           child: new DropdownButtonHideUnderline(
             child: new DropdownButton(
-              value: _produce,
+              value: _product,
               isDense: true,
-              onChanged: (Produce newProduce) {
+              onChanged: (Product newProduct) {
                 withdrawalAmountController.text = '';
                 sacsController.text = '';
                 setState(() {
-                  _produce = newProduce;
-                  state.didChange(newProduce);
+                  _product = newProduct;
+                  state.didChange(newProduct);
                 });
               },
-              items: _products.map((Produce produce) {
+              items: _products.map((Product product) {
                 return new DropdownMenuItem(
-                  value: produce,
-                  child: new Text(produce.name),
+                  value: product,
+                  child: new Text(product.name),
                 );
               }).toList(),
             ),
@@ -129,7 +130,7 @@ class _FinanceTopTabsState extends State<FinanceTopTabs>
     final sacsField = TextField(
       controller: sacsController,
       onChanged: (text) {
-        withdrawalAmountController.text = (double.parse(sacsController.text) * _produce.unitPrice).toString();
+        withdrawalAmountController.text = (double.parse(sacsController.text) * _product.unitPrice).toString();
       },
       keyboardType: TextInputType.number,
       decoration: new InputDecoration(
@@ -147,7 +148,7 @@ class _FinanceTopTabsState extends State<FinanceTopTabs>
       keyboardType: TextInputType.number,
       controller: withdrawalAmountController,
       onChanged: (text) {
-        sacsController.text = (double.parse(text) / _produce.unitPrice).toString();
+        sacsController.text = (double.parse(text) / _product.unitPrice).toString();
       },
       validator: (value) {
         if (value.isEmpty) {
@@ -199,9 +200,9 @@ class _FinanceTopTabsState extends State<FinanceTopTabs>
               final Map newWithdrawal = <String, dynamic>{
                 "amount": amount,
                 "reason": purpose,
-                "collectorId": user.id,
+                "collectorId": user.userId,
                 "supplierId": supplier.id,
-                "productId": _produce.id,
+                "productId": _product.id,
                 "sacs": double.parse(sacsController.text)
               };
 
@@ -210,26 +211,22 @@ class _FinanceTopTabsState extends State<FinanceTopTabs>
                   Supplier.tableName, 'subtract', supplier.id, amount);
               supplier = await AppDb.findSupplierById(supplier.id);
 
-              await AppDb.updateUserWallet('users', 'subtract', user.id, amount);
+              // await AppDb.updateUserWallet('users', 'subtract', user.userId, amount);
 
-              AppDb.findUserById(user.id).then((userFromDb) => setState(() {
+
+              /*AppDb.findUserById(user.userId).then((userFromDb) => setState(() {
                 inheritedWidget.saveUser(new User(
-                    userFromDb.id,
+                    userFromDb.userId,
                     userFromDb.firstName,
-                    userFromDb.lastName,
                     userFromDb.otherNames,
-                    userFromDb.email,
                     userFromDb.phone,
-                    userFromDb.country,
-                    userFromDb.roles,
                     userFromDb.status,
-                    userFromDb.community,
-                    userFromDb.confirmed,
-                    userFromDb.wallet,
-                    userFromDb.countryId,
+                    userFromDb.gender,
+                    userFromDb.password,
                     userFromDb.createdAt,
                     userFromDb.updatedAt));
               }));
+              */
               Scaffold.of(context).showSnackBar(SnackBar(
                 content: Text("Withdrawal has been saved"),
               ));

@@ -1,3 +1,4 @@
+import 'package:collector/sync-page.dart';
 import 'package:collector/wallet-page.dart';
 import 'package:flutter/material.dart';
 import 'login_page.dart';
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
     DownloadSitesPage.tag: (context) => new DownloadSitesPage(),
     ProfilePage.tag: (context) => new ProfilePage(),
     SuppliersPage.tag: (context) => new SuppliersPage(),
+    SyncPage.tag: (context) => new SyncPage()
   };
 
   @override

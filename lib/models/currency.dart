@@ -1,7 +1,9 @@
 class Currency {
-  int id;
+  String id;
   String name;
   String symbol;
+  int createdAt;
+  int updatedAt;
 
   Currency(this.id, this.name, this.symbol);
 
@@ -21,6 +23,8 @@ class Currency {
     this.id = map['id'];
     name = map['name'];
     symbol = map['symbol'];
+    createdAt = int.parse(map['createdAt']);
+    updatedAt = int.parse(map['updatedAt']);
   }
 
   static String tableName = 'currencies';

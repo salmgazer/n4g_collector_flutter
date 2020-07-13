@@ -1,72 +1,63 @@
 class User {
-  int id;
+  String userId;
   String firstName;
-  String lastName;
   String otherNames;
-  String email;
   String phone;
-  String country;
-  String roles;
   String status;
-  String community;
-  int countryId;
-  bool confirmed;
-  double wallet;
-  DateTime createdAt;
-  DateTime updatedAt;
+  String gender;
+  String password;
+  int createdAt;
+  int updatedAt;
 
   User(
-    this.id,
+    this.userId,
     this.firstName,
-    this.lastName,
     this.otherNames,
-    this.email,
     this.phone,
-    this.country,
-    this.roles,
     this.status,
-    this.community,
-    this.confirmed,
-    this.wallet,
-    this.countryId,
+    this.gender,
+    this.password,
     this.createdAt,
     this.updatedAt,
   );
 
+  factory User.fromJson(Map<String, dynamic> parsedJson) {
+    return User(
+        parsedJson['userId'],
+        parsedJson['firstName'],
+        parsedJson['otherNames'],
+        parsedJson['phone'],
+        parsedJson['status'],
+        parsedJson['gender'],
+        parsedJson['password'],
+        int.parse(parsedJson['createdAt']),
+        int.parse(parsedJson['updatedAt'])
+    );
+  }
+
   User.fromMap(Map<String, dynamic> map) {
-    this.id = map['id'];
+    this.userId = map['userId'];
     firstName = map['firstName'];
-    lastName = map['lastName'];
     otherNames = map['otherNames'];
-    email = map['email'];
     phone = map['phone'];
-    countryId = map['countryId'];
-    country = map['country'];
-    roles = map['roles'];
     status = map['status'];
-    community = map['community'];
-    confirmed = (map['confirmed'] == 'false' ? false : true);
-    wallet = map['wallet'];
-    this.createdAt = DateTime.parse(map['createdAt']);
-    this.updatedAt = DateTime.parse(map['updatedAt']);
+    gender = map['gender'];
+    password = map['password'];
+    this.createdAt = map['createdAt'];
+    this.updatedAt = map['updatedAt'];
   }
 
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>
     {
-      "id": id.toString(),
+      "userId": userId.toString(),
       "firstName": firstName,
-      "lastName": lastName,
       "otherNames": otherNames,
-      "email": email,
       "phone": phone,
-      "countryId": countryId,
-      "roles": roles,
       "status": status,
-      "confirmed": confirmed,
-      "wallet": wallet,
-      "createdAt": createdAt.toString(),
-      "updatedAt": updatedAt.toString(),
+      "password": password,
+      "createdAt": createdAt,
+      "updatedAt": updatedAt,
     };
     return map;
   }
@@ -74,14 +65,14 @@ class User {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is User && runtimeType == other.runtimeType && firstName + " " + lastName == other.firstName + " " + other.lastName;
+      other is User && runtimeType == other.runtimeType && firstName + " " + otherNames == other.firstName + " " + other.otherNames;
 
   @override
   int get hashCode => firstName.hashCode;
   
   @override
   String toString() {
-    return firstName + " " + lastName;
+    return firstName;
   }
 
   String get phoneNumber {

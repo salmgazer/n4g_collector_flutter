@@ -1,6 +1,8 @@
 import 'package:collector/middleware/AppDb.dart';
 import 'package:collector/models/community.dart';
+import 'package:collector/models/currency.dart';
 import 'package:collector/models/language.dart';
+import 'package:collector/models/models.dart';
 import 'package:collector/models/supplier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_multiselect/flutter_multiselect.dart';
@@ -12,6 +14,7 @@ import './utils/strings.dart';
 import 'app_state_container.dart';
 import 'middleware/Api.dart';
 import 'dart:convert';
+import 'dart:async';
 
 
 // Create a Form Widget
@@ -34,9 +37,10 @@ class _DownloadSitesPageState extends State<DownloadSitesPage> {
 
   var _communities = [];
 
-  Country nullCountry = Country(-1, '-- Select Country --', '', DateTime(2000), DateTime(2000)); 
-  Region nullRegion = Region(-1, '-- Select Region --', DateTime(2000), DateTime(2000));
-  District nullDistrict = District(-1, '-- Select District --', -1, DateTime(2000), DateTime(2000));
+  static final currentTime = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+  Country nullCountry = Country('-- Select Country --', '', currentTime, currentTime);
+  Region nullRegion = Region('-1', '-- Select Region --', currentTime, currentTime);
+  District nullDistrict = District('-1', '-- Select District --', '-1', currentTime, currentTime);
   
   Country _country;
   Region _region;
@@ -48,8 +52,9 @@ class _DownloadSitesPageState extends State<DownloadSitesPage> {
 
   @override
   void initState() {
+    print("About to initialize");
     Api().filter(Country.tableName, {}).then((fetchedCountries) => setState(() {
-      List <dynamic> countriesBody = json.decode(fetchedCountries.body)['data'];
+      List<dynamic> countriesBody = json.decode(fetchedCountries.body)[Country.tableName];
       print(countriesBody);
       _countries = countriesBody.map((country) => new Country.fromMap(country)).toList();
       _countries.insert(0, nullCountry);
@@ -59,10 +64,11 @@ class _DownloadSitesPageState extends State<DownloadSitesPage> {
   }
 
   void fetchRegions() {
-    if (_country.id != -1) {
-      Api().filter(Region.tableName, {'countryId': _country.id.toString()})
+    if (_country.code != '-1') {
+      final path = Country.tableName + '/' + _country.code.toString() + '/' + Region.tableName;
+      Api().filter(path, {})
         .then((fetchedRegions) => setState(() {
-          List <dynamic> regionsBody = json.decode(fetchedRegions.body)['data'];
+          List <dynamic> regionsBody = json.decode(fetchedRegions.body)[Region.tableName];
           _regions = regionsBody.map((region) => new Region.fromMap(region)).toList();
           _regions.insert(0, nullRegion);
         }));
@@ -70,10 +76,11 @@ class _DownloadSitesPageState extends State<DownloadSitesPage> {
   }
 
   void fetchDistricts() {
-    if (_region.id != -1) {
-      Api().filter(District.tableName, {'regionId': _region.id.toString()})
+    if (_region.id != '-1') {
+      final path = Country.tableName + '/' + _country.code.toString() + '/' + Region.tableName + '/' + _region.id + '/' + District.tableName;
+      Api().filter(path, {})
         .then((fetchedDistricts) => setState(() {
-          List <dynamic> districtsBody = json.decode(fetchedDistricts.body)['data'];
+          List <dynamic> districtsBody = json.decode(fetchedDistricts.body)[District.tableName];
           _districts = districtsBody.map((district) => new District.fromMap(district)).toList();
           _districts.insert(0, nullDistrict);
         }));
@@ -81,48 +88,36 @@ class _DownloadSitesPageState extends State<DownloadSitesPage> {
   }
 
   void fetchCommunities() {
-    if (_district.id != -1) {
-      Api().filter(Community.tableName, {'districtId': _district.id.toString()})
+    if (_district.id != '-1') {
+      final path = Country.tableName + '/' + _country.code.toString() + '/' + Region.tableName + '/' + _region.id + '/' + District.tableName + '/' + _district.id + '/' + Community.tableName;
+      Api().filter(path, {})
         .then((fetchedCommunities) => setState(() {
-          json.decode(fetchedCommunities.body)['data']
+          json.decode(fetchedCommunities.body)[Community.tableName]
             .forEach((comm) => _communities.insert(0, comm));
         }));
     }
   }
 
 
-  getCommunitiesFromSelectedDistrict() async {
-    var communitiesQueryString = new Map<String, String>();
-    var communityResource = Community.tableName;
-
-    if (_selectedCommunities.length == 1) {
-      communitiesQueryString['communityId'] = _selectedCommunities[0].toString();
-    } else {
-      communityResource = communityResource + '?';
-      _selectedCommunities.forEach((comm) =>  communityResource + r"&communityId[$in]");
-    }
-    return Api().filter(Community.tableName, communitiesQueryString);
-  }
-
   getCurrenciesFromApi() async {
-    return Api().filter(Language.tableName, {});
+    return Api().filter(Currency.tableName, {});
   }
 
   getSuppliesFromSelectedCommunities() async {
-    var suppliersQueryString = new Map<String, String>();
-    var supplierResource = Supplier.tableName;
-
-    if (_selectedCommunities.length == 1) {
-      suppliersQueryString['communityId'] = _selectedCommunities[0].toString();
-    } else {
-      supplierResource = supplierResource + '?';
-      _selectedCommunities.forEach((comm) =>  supplierResource + r"&communityId[$in]");
-    }
+    var suppliersQueryString = new Map<String, dynamic>();
+    suppliersQueryString['community_ids'] = _selectedCommunities;
     return Api().filter(Supplier.tableName, suppliersQueryString);
   }
 
-  void downloadSites() async {
-    final existingCountry = await AppDb.findCountryById(_country.id);
+
+  getOrganizationsFromSelectedCommunities() async {
+    var organizationsQueryString = new Map<String, dynamic>();
+    organizationsQueryString['community_ids'] = _selectedCommunities;
+    return Api().filter(Organization.tableName, organizationsQueryString);
+  }
+
+  Future<dynamic> downloadSites() async {
+    final existingCountry = await AppDb.findCountryByCode(_country.code);
     if (existingCountry == null) {
       print("About to create country");
       await AppDb.createOne(Country.tableName, _country.toMap());
@@ -140,22 +135,30 @@ class _DownloadSitesPageState extends State<DownloadSitesPage> {
       await AppDb.createOne(District.tableName, _district.toMap());
     }
 
-    var fetchedCommunities = await getCommunitiesFromSelectedDistrict();
-    fetchedCommunities = json.decode(fetchedCommunities.body)['data'];
-    if (fetchedCommunities.length > 0) {
-      await AppDb.batchInsert(Community.tableName, fetchedCommunities);
+    // var fetchedCommunities = await getCommunitiesFromSelectedDistrict();
+    // fetchedCommunities = json.decode(fetchedCommunities.body)[Community.tableName];
+    if (_communities.length > 0) {
+      final sups = await AppDb.filterCommunities();
+      print(sups);
+      await AppDb.batchInsert(Community.tableName, _communities);
     }
 
     var fetchedSuppliers = await getSuppliesFromSelectedCommunities();
-    fetchedSuppliers = json.decode(fetchedSuppliers.body)['data'];
+    fetchedSuppliers = json.decode(fetchedSuppliers.body)[Supplier.tableName];
     if (fetchedSuppliers.length > 0) {
       await AppDb.batchInsert(Supplier.tableName, fetchedSuppliers);
     }
 
+    var fetchedOrganizations = await getOrganizationsFromSelectedCommunities();
+    fetchedOrganizations= json.decode(fetchedOrganizations.body)[Organization.tableName];
+    if (fetchedOrganizations.length > 0) {
+      await AppDb.batchInsertWithError(Organization.tableName, fetchedOrganizations);
+    }
+
     var fetchedCurrencies = await getCurrenciesFromApi();
-    fetchedCurrencies = json.decode(fetchedCurrencies.body)['data'];
+    fetchedCurrencies = json.decode(fetchedCurrencies.body)[Currency.tableName];
     if (fetchedCurrencies.length > 0) {
-      await AppDb.batchInsert(Language.tableName, fetchedCurrencies);
+      await AppDb.batchInsert(Currency.tableName, fetchedCurrencies);
     }
 
     _country = nullCountry;
@@ -194,10 +197,35 @@ class _DownloadSitesPageState extends State<DownloadSitesPage> {
       );
     }
 
+    void _showSuccessDialog(title, body, buttonText) {
+      // flutter defined function
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          // return object of type Dialog
+          return AlertDialog(
+            title: new Text(title, style: TextStyle(color: Colors.green)),
+            content: new Text(body),
+            actions: <Widget>[
+              // usually buttons at the bottom of the dialog
+              new FlatButton(
+                color: Colors.green,
+                child: new Text(buttonText, style: TextStyle(color: Colors.white)),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+
     final country = new FormField(
       builder: (FormFieldState state) {
       return InputDecorator(
         decoration: InputDecoration(
+          labelText: 'Select country',
           contentPadding: EdgeInsets.all(15.0),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
           icon: const Icon(Icons.flag),
@@ -237,6 +265,7 @@ class _DownloadSitesPageState extends State<DownloadSitesPage> {
       builder: (FormFieldState state) {
       return InputDecorator(
         decoration: InputDecoration(
+          labelText: 'Select region',
           contentPadding: EdgeInsets.all(15.0),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
           icon: const Icon(Icons.my_location),
@@ -275,6 +304,7 @@ class _DownloadSitesPageState extends State<DownloadSitesPage> {
       builder: (FormFieldState state) {
         return InputDecorator(
           decoration: InputDecoration(
+            labelText: 'Select district',
             contentPadding: EdgeInsets.all(15.0),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
             icon: const Icon(Icons.location_city),
@@ -337,22 +367,16 @@ class _DownloadSitesPageState extends State<DownloadSitesPage> {
         child: MaterialButton(
           minWidth: 200.0,
           height: 42.0,
-          onPressed: () {
+          onPressed: () async {
             final FormState form = _downloadSitesFormKey.currentState;
             form.save();
             if (_country == null || _region == null || _district == null || _selectedCommunities == null) {
-              print(_country);
-              print(_region);
-              print(_district);
-              print(_selectedCommunities);
               _showDialog('Incompelete', 'You need to select country, region, district, and communities', 'Ok');
             } else {
-              print(_country);
-              print(_region);
-              print(_district);
-              print(_selectedCommunities);
-              downloadSites();
-              _showDialog('About to download', 'About to download', 'Close');
+              _showDialog('About to download', 'Downloading content', 'Close');
+              await downloadSites();
+              _showSuccessDialog('Successfully downloaded', 'Successfully downloaded', 'Ok');
+              _selectedCommunities = [];
             }
           },
           child: Text('Download', style: TextStyle(color: Colors.white, fontSize: 20.0)),

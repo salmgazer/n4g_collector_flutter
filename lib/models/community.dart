@@ -1,16 +1,16 @@
 class Community {
   String name;
-  int id;
-  DateTime createdAt;
-  DateTime updatedAt;
+  String id;
+  int createdAt;
+  int updatedAt;
 
   Community(this.id, this.name, this.createdAt, this.updatedAt);
 
   Community.fromMap(Map<String, dynamic> map) {
     this.id = map['id'];
     name = map['name'];
-    createdAt = DateTime.parse(map['createdAt']);
-    updatedAt = DateTime.parse(map['updatedAt']);
+    createdAt = int.parse(map['createdAt'].toString());
+    updatedAt = int.parse(map['updatedAt'].toString());
   }
 
   @override

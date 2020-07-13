@@ -7,8 +7,8 @@ class CommunityProducePrice {
   String community;
   String produce;
   String byUser;
-  DateTime createdAt;
-  DateTime updatedAt;
+  int createdAt;
+  int updatedAt;
 
   CommunityProducePrice(
     this.id,
@@ -32,8 +32,8 @@ class CommunityProducePrice {
     community = map['community'];
     produce = map['produce'];
     byUser = map['byUser'];
-    this.createdAt = DateTime.parse(map['createdAt']);
-    this.updatedAt = DateTime.parse(map['updatedAt']);
+    this.createdAt = int.parse(map['createdAt']);
+    this.updatedAt = int.parse(map['updatedAt']);
   }
 
   Map<String, dynamic> toMap() {

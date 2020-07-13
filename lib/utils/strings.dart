@@ -43,7 +43,9 @@ const strings = '''{
     "topup": "Top Up",
     "history": "History",
     "withdrawals": "Withdrawals",
-    "sales": "Sales"
+    "sales": "Sales",
+    "purchases": "Purchases",
+    "sync": "Sync"
   },
   "fra": {
     "suppliers": "Fournisseuses",

@@ -1,28 +1,41 @@
 class AppSetting {
-  String currencyCode;
-  String languageName;
+  String currencyName;
+  String languageCode;
+  int lastLogInDate;
 
   AppSetting(
-    this.currencyCode,
-    this.languageName,
+    this.currencyName,
+    this.languageCode,
+    this.lastLogInDate,
   );
 
   AppSetting.fromMap(Map<String, dynamic> map) {
-    this.currencyCode = map['currencyCode'];
-    this.languageName = map['languageName'];
+    this.currencyName = map['currencyName'];
+    this.languageCode = map['languageName'];
+    this.lastLogInDate = map['lastLogInDate'];
+  }
+
+  Map<String, dynamic> toMap() {
+    var map = <String, dynamic>
+    {
+      "currencyName": currencyName,
+      "languageCode": languageCode,
+      "lastLogInDate": lastLogInDate
+    };
+    return map;
   }
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is AppSetting && runtimeType == other.runtimeType && languageName == other.languageName;
+      other is AppSetting && runtimeType == other.runtimeType && languageCode == other.languageCode;
 
   @override
-  int get hashCode => languageName.hashCode;
+  int get hashCode => languageCode.hashCode;
   
   @override
   String toString() {
-    return languageName;
+    return languageCode;
   }
 
   static String tableName = 'app_settings';

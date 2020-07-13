@@ -1,11 +1,11 @@
 class Withdrawal {
-  int id;
+  String id;
   double amount;
   String collector;
   String supplier;
   String reason;
-  int productId;
-  int sacs;
+  String productId;
+  double sacs;
   String produce;
   DateTime createdAt;
   DateTime updatedAt;
@@ -30,7 +30,7 @@ class Withdrawal {
     supplier = map['supplier'];
     reason = map['reason'];
     productId = map['productId'];
-    sacs = map['sacs'];
+    sacs = double.parse(map['sacs']);
     produce = map['produce'];
     this.createdAt = DateTime.parse(map['createdAt']);
     this.updatedAt = DateTime.parse(map['updatedAt']);

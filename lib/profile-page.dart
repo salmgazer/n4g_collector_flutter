@@ -30,17 +30,12 @@ class ProfilePage extends StatelessWidget {
           Divider(color: Colors.grey),
           ListTile(
             leading: Icon(Icons.person),
-            title: Text('${labels[appLanguage]['last_name']}: ${user.lastName}'),
+            title: Text('${labels[appLanguage]['last_name']}: ${user.otherNames}'),
           ),
           Divider(color: Colors.grey),
           ListTile(
             leading: Icon(Icons.phone),
             title: Text(user.phone),
-          ),
-          Divider(color: Colors.grey),
-          ListTile(
-            leading: Icon(Icons.email),
-            title: Text(user.email),
           ),
           Divider(color: Colors.grey),
           ListTile(

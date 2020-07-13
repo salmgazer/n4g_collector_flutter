@@ -125,7 +125,7 @@ class _WithdrawalPageState extends State<WithdrawalPage> {
               final Map newWithdrawal = <String, dynamic>{
                 "amount": amount,
                 "reason": purpose,
-                "collectorId": user.id,
+                "collectorId": user.userId,
                 "supplierId": supplier.id,
                 "id": withdrawal.id
               };
@@ -133,21 +133,15 @@ class _WithdrawalPageState extends State<WithdrawalPage> {
               try {
                 await AppDb.update(Withdrawal.tableName, newWithdrawal);
 
-                AppDb.findUserById(user.id).then((userFromDb) => setState(() {
+                AppDb.findUserById(user.userId).then((userFromDb) => setState(() {
                   inheritedWidget.saveUser(new User(
-                      userFromDb.id,
+                      userFromDb.userId,
                       userFromDb.firstName,
-                      userFromDb.lastName,
                       userFromDb.otherNames,
-                      userFromDb.email,
                       userFromDb.phone,
-                      userFromDb.country,
-                      userFromDb.roles,
                       userFromDb.status,
-                      userFromDb.community,
-                      userFromDb.confirmed,
-                      userFromDb.wallet,
-                      userFromDb.countryId,
+                      userFromDb.gender,
+                      userFromDb.password,
                       userFromDb.createdAt,
                       userFromDb.updatedAt));
                 }));

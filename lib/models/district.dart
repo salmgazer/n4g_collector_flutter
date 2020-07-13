@@ -1,9 +1,9 @@
 class District {
-  int id;
+  String id;
   String name;
-  int regionId;
-  DateTime createdAt;
-  DateTime updatedAt;
+  String regionId;
+  int createdAt;
+  int updatedAt;
   
 
   District(this.id, this.name, this.regionId, this.createdAt, this.updatedAt);
@@ -25,8 +25,8 @@ class District {
     this.id = map['id'];
     name = map['name'];
     regionId = map['regionId'];
-    createdAt = DateTime.parse(map['createdAt']);
-    updatedAt = DateTime.parse(map['updatedAt']);
+    createdAt = int.parse(map['createdAt'].toString());
+    updatedAt = int.parse(map['updatedAt'].toString());
   }
 
   Map<String, dynamic> toMap() {
@@ -35,8 +35,8 @@ class District {
       "id": id.toString(),
       "name": name,
       "regionId": regionId,
-      "createdAt": createdAt.toString(),
-      "updatedAt": updatedAt.toString(),
+      "createdAt": createdAt,
+      "updatedAt": updatedAt,
     };
     return map;
   }

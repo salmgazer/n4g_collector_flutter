@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'models/user.dart';
 import 'models/community.dart';
-import 'models/produce.dart';
+import 'models/product.dart';
 import 'middleware/AppDb.dart';
 import 'models/currency.dart';
 import 'dart:convert';
@@ -47,8 +47,8 @@ class AppStateContainerState extends State<AppStateContainer> {
   String language;
   Currency currency;
   List<Community> communities;
-  List<Group> groups;
-  List<Produce> products;
+  List<Organization> organizations;
+  List<Product> products;
   AppSetting appSetting;
 
   @override
@@ -64,10 +64,13 @@ class AppStateContainerState extends State<AppStateContainer> {
       getUsersFromDB().then((fetchedUsersFromDB) => setState(() {
         if (fetchedUsersFromDB.length < 1) {
           print("About to fetch users from API");
+
           getUsersFromApi().then((fetchedUsersFromApi) => setState(() {
-            print(fetchedUsersFromApi);
-            for (var i = 0; i < fetchedUsersFromApi['data'].length; i++) {
-              AppDb.createOne('users', fetchedUsersFromApi['data'][i]);
+            List <dynamic> users = fetchedUsersFromApi[User.tableName];
+            // List <User> users = usersBody.map((user) => new User.fromMap(user)).toList();
+
+            for (var i = 0; i < users.length; i++) {
+              AppDb.createOne(User.tableName, users[i]);
             }
           }));
         } else {
@@ -80,10 +83,27 @@ class AppStateContainerState extends State<AppStateContainer> {
         if (fetchedProductsFromDB.length < 1) {
           print("About to fetch products from API");
           getProductsFromApi().then((fetchedProductsFromApi) => setState(() {
-            AppDb.batchInsert(Produce.tableName, fetchedProductsFromApi['data']);
+            print(fetchedProductsFromApi);
+            AppDb.batchInsert(Product.tableName, fetchedProductsFromApi[Product.tableName]);
           }));
+        } else {
+          print("There are products in local db");
         }
       }));
+
+      /*
+      getOrganizationsFromDB().then((fetchedOrganizationsFromDB) => setState(() {
+        if (fetchedOrganizationsFromDB.length < 1) {
+          print("About to fetch organizations from API");
+          getOrganizationsFromApi().then((fetchedOrganizationsFromApi) => setState(() {
+            print(fetchedOrganizationsFromApi);
+            AppDb.batchInsert(Organization.tableName, fetchedOrganizationsFromApi[Organization.tableName]);
+          }));
+        } else {
+          print("There are organizations in local db");
+        }
+      }));
+      */
 
       /*
       getProductsFromDB().then((fetchedProducts) => setState(() {
@@ -113,13 +133,13 @@ class AppStateContainerState extends State<AppStateContainer> {
 
   String getLanguage() => this.language;
 
-  Currency getCurrency() => this.currency == null ? new Currency(1, 'Ghanaian cedis', 'GH₵') : this.currency;
+  Currency getCurrency() => this.currency == null ? new Currency('-1', 'Ghanaian cedis', 'GH₵') : this.currency;
 
   List<Community> getCommunities() => this.communities;
 
-  List<Group> getGroups() => this.groups;
+  List<Organization> getGroups() => this.organizations;
 
-  List<Produce> getProducts() => this.products;
+  List<Product> getProducts() => this.products;
 
   AppSetting getAppSetting() => this.appSetting;
 
@@ -135,8 +155,8 @@ class AppStateContainerState extends State<AppStateContainer> {
     return AppDb.filterCommunities();
   }
 
-  getGroupsFromDB() async {
-    return AppDb.filterGroups();
+  getOrganizationsFromDB() async {
+    return AppDb.filterOrganizations();
   }
 
   getAppSettingFromDB() async {
@@ -145,16 +165,23 @@ class AppStateContainerState extends State<AppStateContainer> {
 
   getUsersFromApi() async {
     final queryString = new Map<String, String>();
-    queryString['roles'] = 'collector';
     final response = await Api().filter(User.tableName, queryString);
     return json.decode(response.body);
   }
 
   getProductsFromApi() async {
     final queryString = new Map<String, String>();
-    final response = await Api().filter(Produce.tableName, queryString);
+    final response = await Api().filter(Product.tableName, queryString);
     return json.decode(response.body);
   }
+
+  /*
+  getOrganizationsFromApi() async {
+    final queryString = new Map<String, String>();
+    final response = await Api().filter(Organization.tableName, queryString);
+    return json.decode(response.body);
+  }
+  */
 
   getCountryFromApi(id) async {
     final queryString = new Map<String, String>();
@@ -169,7 +196,7 @@ class AppStateContainerState extends State<AppStateContainer> {
     });
   }
 
-  void setProducts(List<Produce> products) {
+  void setProducts(List<Product> products) {
     setState(() {
       this.products = products;
     });
@@ -181,9 +208,9 @@ class AppStateContainerState extends State<AppStateContainer> {
     });
   }
 
-  void setGroups(List<Group> groups) {
+  void setOrganizations(List<Organization> organizations) {
     setState(() {
-      this.groups = groups;
+      this.organizations = organizations;
     });
   }
 

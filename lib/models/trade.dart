@@ -1,23 +1,23 @@
 import 'dart:math';
 
 class Trade {
-  int id;
+  String id;
   String date;
   String payment;
   double cost;
   double amountPaid;
   String produce;
   String supplier;
-  int collectorId;
+  String collectorId;
   String collector;
-  String currency;
-  int sacs; // make int
-  String produceYield; // in kg, make double
+  String currencyId;
+  double sacs; // make int
+  String yield; // in kg, make double
   String otherCostPurpose;
   String otherCost; // make double
-  int produceId;
-  DateTime createdAt;
-  DateTime updatedAt;
+  String produceId;
+  int createdAt;
+  int updatedAt;
 
   Trade(
     this.id,
@@ -28,10 +28,9 @@ class Trade {
     this.produce,
     this.supplier,
     this.collectorId,
-    this.collector,
-    this.currency,
+    this.currencyId,
     this.sacs,
-    this.produceYield,
+    this.yield,
     this.otherCost,
     this.otherCostPurpose,
     this.createdAt,
@@ -49,13 +48,35 @@ class Trade {
     supplier = map['supplierFirstName'];
     collectorId = map['collectorId'];
     collector = map['collectorFirstName'] + " " + map['collectorLastName'];
-    currency = map['currency'];
+    currencyId = map['currencyId'];
     sacs = map['sacs'];
-    produceYield = map['yield'].toString();
+    yield = map['yield'].toString();
     otherCost =  map['otherCost'].toString();
     otherCostPurpose = map['otherCostPurpose'];
-    this.createdAt = DateTime.parse(map['createdAt']);
-    this.updatedAt = DateTime.parse(map['updatedAt']);
+    this.createdAt = int.parse(map['createdAt'].toString());
+    this.updatedAt = int.parse(map['updatedAt'].toString());
+  }
+
+
+  Map<String, dynamic> toMap() {
+    var map = <String, dynamic>
+    {
+      "id": id,
+      "date": date,
+      "payment": payment,
+      "cost": cost,
+      "amountPaid": amountPaid,
+      "productId": produce,
+      "collectorId": collectorId,
+      "currencyId": currencyId,
+      "sacs": sacs,
+      "yield": yield,
+      "otherCost": otherCost,
+      "otherCostPurpose": otherCostPurpose,
+      "createdAt": createdAt,
+      "updatedAt": updatedAt
+    };
+    return map;
   }
 
   @override

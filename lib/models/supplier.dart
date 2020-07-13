@@ -1,29 +1,29 @@
 class Supplier {
   String firstName;
-  String lastName;
+  String otherNames;
   String phone;
   String membershipCode;
   String gender;
   String about;
-  String district;
-  String community;
-  String group;
+  String communityId;
+  Supplier community;
+  String organization;
+  String organizationId;
   double accountBalance;
-  DateTime createdAt;
-  DateTime updatedAt;
-  int id;
+  int createdAt;
+  int updatedAt;
+  String id;
 
   Supplier(
     this.id,
     this.firstName,
-    this.lastName,
+    this.otherNames,
     this.phone,
     this.membershipCode,
     this.gender,
     this.about,
-    this.district,
-    this.community,
-    this.group,
+    this.communityId,
+    this.organizationId,
     this.accountBalance,
     this.createdAt,
     this.updatedAt,
@@ -32,17 +32,16 @@ class Supplier {
   Supplier.fromMap(Map<String, dynamic> map) {
     this.id = map['id'];
     firstName = map['firstName'];
-    lastName = map['lastName'];
+    otherNames = map['otherNames'];
     phone = map['phone'];
     membershipCode = map['membershipCode'];
     gender = map['gender'];
     about = map['about'];
-    district = map['district'];
-    community = map['community'];
-    group = map['group'];
+    communityId = map['communityId'];
+    organizationId = map['organizationId'];
     accountBalance = map['accountBalance'];
-    this.createdAt = DateTime.parse(map['createdAt']);
-    this.updatedAt = DateTime.parse(map['updatedAt']);
+    this.createdAt = int.parse(map['createdAt'].toString());
+    this.updatedAt = int.parse(map['updatedAt'].toString());
   }
 
   Map<String, dynamic> toMap() {
@@ -50,32 +49,31 @@ class Supplier {
     {
       "id": id.toString(),
       "firstName": firstName,
-      "lastName": lastName,
+      "otherNames": otherNames,
       "phone": phone,
       "membershipCode": membershipCode,
       "gender": gender,
       "about": about,
-      "district": district,
-      "community": community,
-      "group": group,
-      "accountBalance": accountBalance,
-      "createdAt": createdAt.toString(),
-      "updatedAt": updatedAt.toString(),
+      "communityId": communityId,
+      "organizationId": organizationId,
+      "createdAt": createdAt,
+      "updatedAt": updatedAt,
     };
+
     return map;
   }
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Supplier && runtimeType == other.runtimeType && firstName + " " + lastName == other.firstName + " " + other.lastName;
+      other is Supplier && runtimeType == other.runtimeType && firstName + " " + otherNames == other.firstName + " " + other.otherNames;
 
   @override
   int get hashCode => firstName.hashCode;
 
   @override
   String toString() {
-    return firstName + " " + lastName;
+    return firstName + " " + otherNames;
   }
 
   static String tableName = 'suppliers';

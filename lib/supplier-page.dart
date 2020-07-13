@@ -56,13 +56,15 @@ class _SupplierPageState extends State<SupplierPage> {
         Divider(color: Colors.grey),
         ListTile(
           leading: Icon(Icons.person),
-          title: Text('Last name: ' + supplier.lastName),
+          title: Text('Other name: ' + supplier.otherNames),
         ),
+        /*
         Divider(color: Colors.grey),
         ListTile(
           leading: Icon(Icons.location_city),
-          title: Text('Community: ' + supplier.community),
+          title: Text('Community: ' + supplier.communityId),
         ),
+        */
         Divider(color: Colors.grey),
         ListTile(
           leading: Icon(Icons.phone),
@@ -98,7 +100,7 @@ class _SupplierPageState extends State<SupplierPage> {
     );
 
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
           resizeToAvoidBottomPadding: false,
           appBar: AppBar(
@@ -112,6 +114,7 @@ class _SupplierPageState extends State<SupplierPage> {
                     ),
                   ),
                 ),
+                /*
                 Tab(
                   child: Container(
                     child: Text(
@@ -120,6 +123,7 @@ class _SupplierPageState extends State<SupplierPage> {
                     ),
                   ),
                 ),
+                */
                 Tab(
                   child: Container(
                     child: Text(
@@ -130,12 +134,12 @@ class _SupplierPageState extends State<SupplierPage> {
                 ),
               ],
             ),
-            title: Text(supplier.toString() + "  -  " + supplier.community),
+            title: Text(supplier.toString()),
           ),
           body: TabBarView(
             children: <Widget>[
               TradeTopTabs(this.supplier),//ff5722
-              FinanceTopTabs(this.supplier),//3f51b5//2196f3 //4CAF50
+              /*FinanceTopTabs(this.supplier),//3f51b5//2196f3 //4CAF50*/
               profileTab
             ],
           )),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'components/my-drawer.dart';
 import 'models/currency.dart';
-import 'models/produce.dart';
+import 'models/product.dart';
 import './utils/strings.dart';
 import 'models/language.dart';
 import 'models/community.dart';
@@ -23,19 +23,20 @@ class _SettingsPageState extends State<SettingsPage> {
   List<Currency> _currencies = <Currency>[];
 
   List<Language> _languages = <Language>[
-    Language(1, 'English', 'eng'),
-    Language(2, 'French', 'fra'),
+    Language('1', 'English', 'eng'),
+    Language('2', 'French', 'fra'),
   ];
 
-  Community _community = Community(-1, '-- Select community --', DateTime(2019), DateTime(2019));
+  static final currentTime = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+  Community _community = Community('-1', '-- Select community --', currentTime, currentTime);
   List<Community> _communities = <Community>[];
 
 
-  Produce _produce = Produce(-1, '-- Select produce --', 0, DateTime(2019), DateTime(2019));
-  List<Produce> _products = <Produce>[];
+  Product _product = Product('-1', '-- Select produce --', 0, currentTime, currentTime);
+  List<Product> _products = <Product>[];
 
-  Currency _currency = Currency(-1, '-- Select currency --', '--');
-  Language _language = Language(-1, '-- Select language --', '--');
+  Currency _currency = Currency('-1', '-- Select currency --', '--');
+  Language _language = Language('-1', '-- Select language --', '--');
 
 
   final _formKey = GlobalKey<FormState>();
@@ -86,7 +87,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _communities.insert(0, _community);
     } else {
       final defaultCommunity = _communities.firstWhere((community) =>
-      community.id.isNegative, orElse: () => null);
+      community.id == '-1', orElse: () => null);
       if (defaultCommunity == null) {
         _communities.insert(0, _community);
       }
@@ -96,11 +97,11 @@ class _SettingsPageState extends State<SettingsPage> {
     _products = products;
 
     if (_products == null) {
-      _products = <Produce>[];
+      _products = <Product>[];
     }
-    final defaultProduct = _products.firstWhere((product) => product.id.isNegative, orElse: () => null);
+    final defaultProduct = _products.firstWhere((product) => product.id == '-1', orElse: () => null);
     if (defaultProduct == null) {
-      _products.insert(0, _produce);
+      _products.insert(0, _product);
     }
 
     final currentCurrency = inheritedWidget.getCurrency();
@@ -114,7 +115,7 @@ class _SettingsPageState extends State<SettingsPage> {
             icon: const Icon(Icons.location_on),
             // labelText: 'Community',
           ),
-          isEmpty: _community == Community(-1, '-- Select community --', DateTime(2019), DateTime(2019)),
+          isEmpty: _community == Community('-1', '-- Select community --', currentTime, currentTime),
           child: new DropdownButtonHideUnderline(
             child: new DropdownButton(
               value: _community,
@@ -146,7 +147,7 @@ class _SettingsPageState extends State<SettingsPage> {
           icon: const Icon(Icons.attach_money),
           // labelText: 'currency',
         ),
-        isEmpty: _currency == Currency(-1, '-- Select currency --', '--'),
+        isEmpty: _currency == Currency('-1', '-- Select currency --', '--'),
         child: new DropdownButtonHideUnderline(
           child: new DropdownButton(
             value: _currency,
@@ -179,21 +180,21 @@ class _SettingsPageState extends State<SettingsPage> {
           icon: const Icon(Icons.library_books),
           // labelText: 'produce',
         ),
-        isEmpty: _produce == Produce(-1, '-- Select produce --', 0, DateTime(2019), DateTime(2019)),
+        isEmpty: _product == Product('-1', '-- Select produce --', 0, currentTime, currentTime),
         child: new DropdownButtonHideUnderline(
           child: new DropdownButton(
-            value: _produce,
+            value: _product,
             isDense: true,
-            onChanged: (Produce newProduce) {
+            onChanged: (Product newProduct) {
               setState(() {
-                _produce = newProduce;
-                state.didChange(newProduce);
+                _product = newProduct;
+                state.didChange(newProduct);
               });
             },
-            items: _products.map((Produce produce) {
+            items: _products.map((Product product) {
               return new DropdownMenuItem(
-                value: produce,
-                child: new Text(produce.name),
+                value: product,
+                child: new Text(product.name),
               );
             }).toList(),
           ),
@@ -251,7 +252,7 @@ class _SettingsPageState extends State<SettingsPage> {
           icon: const Icon(Icons.library_books),
           // labelText: 'produce',
         ),
-        isEmpty: _language == Language(-1, '-- Select language --', '--'),
+        isEmpty: _language == Language('-1', '-- Select language --', '--'),
         child: new DropdownButtonHideUnderline(
           child: new DropdownButton(
             value: _language,

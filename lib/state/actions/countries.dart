@@ -20,14 +20,14 @@ class CountriesLoadedAction {
 
 
 class UpdateCountryAction {
-  final int id;
+  final String code;
   final Country updatedCountry;
 
-  UpdateCountryAction(this.id, this.updatedCountry);
+  UpdateCountryAction(this.code, this.updatedCountry);
 
   @override
   String toString() {
-    return 'UpdateCountryAction{id: $id, updatedCountry: $updatedCountry}';
+    return 'UpdateCountryAction{id: $code, updatedCountry: $updatedCountry}';
   }
 }
 

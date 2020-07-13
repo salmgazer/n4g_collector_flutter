@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'models/supplier.dart';
-import 'models/produce.dart';
+import 'models/product.dart';
 import 'middleware/AppDb.dart';
 import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +9,10 @@ import './utils/strings.dart';
 import 'components/transaction-list-item.dart';
 import 'models/trade.dart';
 import 'models/user.dart';
+import 'package:uuid/uuid.dart';
+
+var uuid = new Uuid();
+
 
 
 class TradeTopTabs extends StatefulWidget {
@@ -21,8 +25,8 @@ class _TradeTopTabsState extends State<TradeTopTabs>
     with SingleTickerProviderStateMixin {
   TabController _tabController;
 
-  Produce _produce = Produce(-1, '-- Select produce --', 0, DateTime(2019), DateTime(2019));
-  List<Produce> _products = <Produce>[];
+  Product _product = Product('-1', '-- Select product --', 0, currentTime, currentTime);
+  List<Product> _products = <Product>[];
 
   @override
   void initState() {
@@ -41,6 +45,7 @@ class _TradeTopTabsState extends State<TradeTopTabs>
   final TextEditingController otherCostController = TextEditingController();
   final TextEditingController dateController = TextEditingController();
   final TextEditingController otherCostPurposeController = TextEditingController();
+  final TextEditingController unitSacCostPriceController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
   final boxHeight = 10.0;
@@ -75,6 +80,15 @@ class _TradeTopTabsState extends State<TradeTopTabs>
     });
   }
 
+  static final currentTime = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+
+  void setNewCost() {
+    costController.text = ((double.parse(sacsController.text.length == 0 ? "0" : sacsController.text)
+        *  double.parse(unitSacCostPriceController.text.length == 0 ? "0" : unitSacCostPriceController.text))
+        + double.parse(otherCostController.text.length == 0 ? "0" : otherCostPurposeController.text)
+    ).toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppStateContainerState inheritedWidget = AppStateContainer.of(context);
@@ -83,9 +97,9 @@ class _TradeTopTabsState extends State<TradeTopTabs>
     // final products = inheritedWidget.getProducts();
     // _products = products;
     print("##############");
-    final defaultProduct = _products.firstWhere((product) => product.id.isNegative, orElse: () => null);
+    final defaultProduct = _products.firstWhere((product) => product.id == '-1', orElse: () => null);
     if (defaultProduct == null) {
-      _products.insert(0, _produce);
+      _products.insert(0, _product);
     }
 
     final user = inheritedWidget.getUser();
@@ -93,32 +107,33 @@ class _TradeTopTabsState extends State<TradeTopTabs>
 
     final displayName = labels[appLanguage]['buy_from'];
 
+
     // Build a Form widget using the _formKey we created above
-    final produceField = new FormField(
+    final productField = new FormField(
       builder: (FormFieldState state) {
         return InputDecorator(
           decoration: InputDecoration(
             contentPadding: EdgeInsets.all(15.0),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
             icon: const Icon(Icons.nature),
-            // labelText: 'Select Produce',
+            // labelText: 'Select Product',
           ),
-          isEmpty: _produce == Produce(-1, '-- Select produce --', 0, DateTime(2019), DateTime(2019)),
+          isEmpty: _product == Product('-1', '-- Select product --', 0, currentTime, currentTime),
           child: new DropdownButtonHideUnderline(
             child: new DropdownButton(
-              value: _produce,
+              value: _product,
               isDense: true,
-              onChanged: (Produce newProduce) {
+              onChanged: (Product newProduct) {
                 setState(() {
-                  _produce = newProduce;
-                  state.didChange(newProduce);
+                  _product = newProduct;
+                  state.didChange(newProduct);
                 });
-                costController.text = (double.parse(sacsController.text.length == 0 ? "0" : sacsController.text) * newProduce.unitPrice).toString();
+                setNewCost();
               },
-              items: _products.map((Produce produce) {
+              items: _products.map((Product product) {
                 return new DropdownMenuItem(
-                  value: produce,
-                  child: new Text(produce.name),
+                  value: product,
+                  child: new Text(product.name),
                 );
               }).toList(),
             ),
@@ -130,7 +145,8 @@ class _TradeTopTabsState extends State<TradeTopTabs>
     final sacsField = TextField(
       controller: sacsController,
       onChanged: (text) {
-        costController.text = (double.parse(sacsController.text) * _produce.unitPrice).toString();
+      setState(() {});
+        setNewCost();
       },
       keyboardType: TextInputType.number,
       decoration: new InputDecoration(
@@ -143,7 +159,7 @@ class _TradeTopTabsState extends State<TradeTopTabs>
       ),
     );
 
-    final produceYieldField = TextFormField(
+    final productYieldField = TextFormField(
       keyboardType: TextInputType.number,
       decoration: new InputDecoration(
         hintText: 'Yield in (Kg)',
@@ -186,6 +202,28 @@ class _TradeTopTabsState extends State<TradeTopTabs>
       ),
     );
 
+    final unitSacCostPrice = TextFormField(
+      keyboardType: TextInputType.number,
+      enabled: true,
+      controller: unitSacCostPriceController,
+      decoration: new InputDecoration(
+        labelStyle: TextStyle(color: Colors.brown),
+        labelText: 'Cost price per sac ${currency.symbol}',
+        icon: const Icon(Icons.looks_one),
+        contentPadding: EdgeInsets.all(15.0),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
+      ),
+      onChanged: (text) {
+        setState(() {});
+        setNewCost();
+      },
+      validator: (value) {
+        if (value == null) {
+          return 'Enter cost price per sac';
+        }
+      },
+    );
+
     final otherCostField = TextField(
       keyboardType: TextInputType.number,
       controller: otherCostController,
@@ -198,9 +236,8 @@ class _TradeTopTabsState extends State<TradeTopTabs>
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
       ),
       onChanged: (text) {
-        costController.text = (
-            (double.parse(sacsController.text) * _produce.unitPrice) +
-                double.parse(otherCostController.text)).toString();
+        setState(() {});
+        setNewCost();
       },
     );
 
@@ -269,44 +306,49 @@ class _TradeTopTabsState extends State<TradeTopTabs>
                 payment = 'partially paid';
               }
 
+              final currentTime = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+              print("***********************");
+              print(user.userId);
+              print(user.toMap());
               final Map newTrade = <String, dynamic>{
+                "id": uuid.v4(),
                 "date": dateController.text,
                 "payment": payment,
                 "cost": cost,
                 "amountPaid": amountPaid,
-                "productId": _produce.id,
+                "productId": _product.id,
                 "supplierId": supplier.id,
-                "collectorId": user.id,
+                "collectorId": user.userId,
                 "sacs": sacsController.text,
                 "yield": yieldController.text,
                 "otherCost": otherCostController.text,
                 "otherCostPurpose": otherCostPurposeController.text,
-                "currencyId": currency.id
+                "currencyId": currency.id,
+                "createdAt": currentTime,
+                "updatedAt": currentTime
               };
 
+              // await AppDb.createOne(Trade.tableName, newTrade);
               final savedTrade = await AppDb.createOne(Trade.tableName, newTrade);
+
               if (savedTrade != null) {
                 // subtract from wallet
-                await AppDb.updateUserWallet('users', 'subtract', user.id, amountPaid);
+                // await AppDb.updateUserWallet('users', 'subtract', user.userId, amountPaid);
 
-                AppDb.findUserById(user.id).then((userFromDb) => setState(() {
+                /*
+                AppDb.findUserById(user.userId).then((userFromDb) => setState(() {
                   inheritedWidget.saveUser(new User(
-                      userFromDb.id,
+                      userFromDb.userId,
                       userFromDb.firstName,
-                      userFromDb.lastName,
                       userFromDb.otherNames,
-                      userFromDb.email,
                       userFromDb.phone,
-                      userFromDb.country,
-                      userFromDb.roles,
                       userFromDb.status,
-                      userFromDb.community,
-                      userFromDb.confirmed,
-                      userFromDb.wallet,
-                      userFromDb.countryId,
+                      userFromDb.gender,
+                      userFromDb.password,
                       userFromDb.createdAt,
                       userFromDb.updatedAt));
                 }));
+                */
 
                 amountPaidController.text = '';
                 otherCostPurposeController.text = '';
@@ -315,9 +357,13 @@ class _TradeTopTabsState extends State<TradeTopTabs>
                 dateController.text = '';
                 sacsController.text = '';
                 yieldController.text = '';
-                _produce = Produce(-1, '-- Select produce --', 0, DateTime(2019), DateTime(2019));
+                _product = Product('-1', '-- Select product --', 0, currentTime, currentTime);
               }
+
               // Navigator.of(context).pushNamed(SuppliersPage.tag);
+              Scaffold.of(context).showSnackBar(SnackBar(
+                content: Text("Transaction has been saved"),
+              ));
             }
           },
           child: Text('Save', style: TextStyle(color: Colors.white, fontSize: 18)),
@@ -336,11 +382,13 @@ class _TradeTopTabsState extends State<TradeTopTabs>
             children: <Widget>[
               // formLabel,
               // SizedBox(height: boxHeight),
-              produceField,
+              productField,
               SizedBox(height: boxHeight),
               sacsField,
               SizedBox(height: boxHeight),
-              produceYieldField,
+              unitSacCostPrice,
+              SizedBox(height: boxHeight),
+              productYieldField,
               SizedBox(height: boxHeight),
               transactionDateField,
               SizedBox(height: boxHeight),

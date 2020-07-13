@@ -98,32 +98,26 @@ class _WalletTopUpPageState extends State<WalletTopUpPage> {
 
               final Map newWalletTopUp = <String, dynamic>{
                 "amount": amount,
-                "forUserId": user.id,
-                "byUserId": user.id,
+                "forUserId": user.userId,
+                "byUserId": user.userId,
                 "id": walletTopUp.id
               };
 
               try {
                 await AppDb.update(WalletTopUp.tableName, newWalletTopUp);
-                await AppDb.updateUserWallet('users', 'add', user.id, double.parse(walletTopUp.amount.toString()));
-                await AppDb.updateUserWallet('users', 'subtract', user.id, double.parse(amount));
+                await AppDb.updateUserWallet('users', 'add', user.userId, double.parse(walletTopUp.amount.toString()));
+                await AppDb.updateUserWallet('users', 'subtract', user.userId, double.parse(amount));
                 walletTopUpAmountController.text = amount;
 
-                AppDb.findUserById(user.id).then((userFromDb) => setState(() {
+                AppDb.findUserById(user.userId).then((userFromDb) => setState(() {
                   inheritedWidget.saveUser(new User(
-                      userFromDb.id,
+                      userFromDb.userId,
                       userFromDb.firstName,
-                      userFromDb.lastName,
                       userFromDb.otherNames,
-                      userFromDb.email,
                       userFromDb.phone,
-                      userFromDb.country,
-                      userFromDb.roles,
                       userFromDb.status,
-                      userFromDb.community,
-                      userFromDb.confirmed,
-                      userFromDb.wallet,
-                      userFromDb.countryId,
+                      userFromDb.gender,
+                      userFromDb.password,
                       userFromDb.createdAt,
                       userFromDb.updatedAt));
                 }));
